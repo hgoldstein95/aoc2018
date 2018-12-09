@@ -39,6 +39,9 @@ packages:
 # (e.g., acme-missiles-0.3)
 extra-deps:
 - scanf-0.1.0.0@sha256:a4d760fc31120be424a3527553336679493882d7fac78c148cb8797a67c35f36
+- dequeue-0.1.12@sha256:547c2a71819dca0ae1bf7c15fb290b39f80d5d9a6f9985a06a1cb8645b578df2
+
+
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

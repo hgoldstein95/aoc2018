@@ -1,12 +1,11 @@
-{-# LANGUAGE LambdaCase #-}
-
 module Day9 where
 
 import Day9.Types
 
-import Control.Lens (use, (%=), (.=), imap, view)
+import Control.Lens (use, (%=), (.=), ix)
 import Control.Monad (replicateM_, forM_, when)
-import Control.Monad.State (execState, modify, get, put)
+import Control.Monad.State.Strict (modify, get, put)
+import Data.Array (listArray, elems)
 import Data.Char (isDigit)
 import Data.List.Split (split, dropBlanks, dropDelims, whenElt)
 import Text.Printf (printf)
@@ -20,46 +19,25 @@ parse :: String -> (Int, Int)
 parse s = (,) $$ (read <$> split splitAtInts s)
   where splitAtInts = dropBlanks . dropDelims $ whenElt (not . isDigit)
 
-zipperClockwise :: Zipper a -> Zipper a
-zipperClockwise = \case
-  Zipper [] [] -> Zipper [] []
-  Zipper (x : xs) [] -> error "Zipper invariant broken"
-  Zipper xs [y] -> Zipper [] (reverse (y : xs))
-  Zipper xs (y : ys) -> Zipper (y : xs) ys
-
-zipperCounter :: Zipper a -> Zipper a
-zipperCounter = \case
-  Zipper [] ys -> case reverse ys of
-    [] -> Zipper [] []
-    (y : ys) -> Zipper ys [y]
-  Zipper (x : xs) ys -> Zipper xs (x : ys)
-
-zipperPlace :: a -> Zipper a -> Zipper a
-zipperPlace y (Zipper xs ys) = Zipper xs (y : ys)
-
-zipperRemove :: (Show a) => Zipper a -> (a, Zipper a)
-zipperRemove (Zipper xs (y : ys)) = (y, Zipper xs ys)
-zipperRemove z = error $ "Cannot remove from: " ++ show z
-
 clockwise :: Int -> Game ()
-clockwise = flip replicateM_ (zipper %= zipperClockwise)
+clockwise n = circle %= circleClockwise n
 
 counter :: Int -> Game ()
-counter = flip replicateM_ (zipper %= zipperCounter)
+counter n = circle %= circleCounter n
 
 place :: Int -> Game ()
-place y = zipper %= zipperPlace y
+place y = circle %= circlePlace y
 
 remove :: Game Int
-remove = do { (y, z) <- zipperRemove <$> use zipper; zipper .= z; pure y }
+remove = do { (y, z) <- circleRemove <$> use circle; circle .= z; pure y }
 
 addScore :: Int -> Int -> Game ()
-addScore p amt = scores %= imap (\i x -> if i == p then x + amt else x)
+addScore p amt = scores.ix p %= (+ amt)
 
-marbles :: Int -> Int -> Game ()
+marbles :: Int -> Int -> Game [Int]
 marbles nPlayers nMarbles = do
   let turns = zip (cycle [1..nPlayers]) [1..nMarbles]
-  scores .= replicate nPlayers 0
+  scores .= listArray (1, nPlayers) (replicate nPlayers 0)
   place 0
   forM_ turns $ \(p, m) -> do
     when (m `mod` 23 /= 0) $ do
@@ -69,9 +47,7 @@ marbles nPlayers nMarbles = do
       counter 7
       m' <- remove
       addScore p (m + m')
-
-playGame :: Game () -> [Int]
-playGame = view scores . flip execState (GameState (Zipper [] []) [])
+  elems <$> use scores
 
 run :: IO ()
 run = do

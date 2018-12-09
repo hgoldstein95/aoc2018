@@ -27,6 +27,7 @@ dependencies:
 - split
 - array
 - mtl
+- dequeue
 
 library:
   source-dirs: src
