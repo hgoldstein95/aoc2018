@@ -28,6 +28,11 @@ dependencies:
 - array
 - mtl
 - dequeue
+- snap
+- snap-core
+- snap-server
+- bytestring
+- aeson
 
 library:
   source-dirs: src
