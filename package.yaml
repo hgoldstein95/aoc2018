@@ -33,6 +33,7 @@ dependencies:
 - snap-server
 - bytestring
 - aeson
+- memoize
 
 library:
   source-dirs: src
